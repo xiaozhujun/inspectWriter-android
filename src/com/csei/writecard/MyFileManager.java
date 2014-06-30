@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import com.csei.adapter.MyAdapter;
 import com.csei.analysexml.ParseXml;
+import com.csei.entity.FileString;
 import com.example.writecard.R;
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -84,7 +85,7 @@ public class MyFileManager extends ListActivity {
 	    	Log.e("fileName",file.getName());
 	    	Log.e("file",curPath+"/"+file.getName());
 	    	String filepath=curPath+"/"+file.getName();
-	    	if(file.getName().equals("Employer.xml")){
+	    	if(file.getName().equals(FileString.Employers)){
 	    	String s="";
 	        list=p.parseEmployers(filepath);
 	        int len=p.getEmployersCount(filepath);
@@ -103,7 +104,7 @@ public class MyFileManager extends ListActivity {
 				data.putExtras(bundle);
 				setResult(2,data);
 		    	finish();
-	    	}else if(file.getName().equals("tags.xml")){
+	    	}else if(file.getName().equals(FileString.Tags)){
 	    		String s="";
 		        list=p.parseTagXml(filepath);
 		        int len=p.getEmployersCount(filepath);
