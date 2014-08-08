@@ -59,10 +59,13 @@ public class Tag implements Listable{
 	
 	@Override
 	public void setByList(List<String> params) throws ArgumentException{
-		if(params.size()==PROPERTY_COUNT){
+		if(params.size()>3){
 			this.tagArea = params.get(1);
-			this.deviceNum = params.get(2);
-			this.tagAreaNum = params.get(3);
+			this.tagAreaNum = params.get(2);
+			this.deviceNum = params.get(3);
+			for(int i=4;i<params.size();i++){
+				this.deviceNum+=params.get(i);
+			}
 		}else{
 			throw new ArgumentException("构造参数正确");
 		}
@@ -78,8 +81,24 @@ public class Tag implements Listable{
 		ArrayList<String> params = new ArrayList<String>();
 		params.add(cardType);
 		params.add(tagArea);
-		params.add(deviceNum); 
 		params.add(tagAreaNum);
+		
+		if(deviceNum.length()<16){
+			params.add(deviceNum);
+		}else{
+			int count=0;
+			for(;count<deviceNum.length();){
+				if(count+15<=deviceNum.length()){
+					params.add(deviceNum.substring(count, count+15));
+					count+=15;
+				}else{
+					params.add(deviceNum.substring(count, deviceNum.length()));
+					count=deviceNum.length();
+				}
+				
+			}
+		}
+		 
 		
 		return params;
 	}
