@@ -36,6 +36,7 @@ public class ReadFileActivity extends Activity implements OnClickListener {
    public static final int FILE_RESULT_CODE=1;
    private Button selectfile;
    private Button writecard;
+   private Button inicard;
    private Button backbutton;
    private ListView showTextContent;
    ArrayList<HashMap<String, Object>> listItem=new ArrayList<HashMap<String,Object>>();	  
@@ -77,6 +78,7 @@ public class ReadFileActivity extends Activity implements OnClickListener {
 		setContentView(R.layout.readfile);
 		selectfile=(Button) this.findViewById(R.id.selectfile);
 		writecard=(Button) this.findViewById(R.id.writecard);
+		inicard=(Button) this.findViewById(R.id.inicard);
 		showTextContent=(ListView) this.findViewById(R.id.showfilecontent);
 		backbutton=(Button) this.findViewById(R.id.backbutton);
 		selectfile.setOnClickListener(new OnClickListener() {
@@ -96,6 +98,31 @@ public class ReadFileActivity extends Activity implements OnClickListener {
 				finish();
 			}
 		});
+		
+		inicard.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				shibieDialog = new ProgressDialog(ReadFileActivity.this, R.style.mProgressDialog);
+				shibieDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+				shibieDialog.setMessage("重置标签中...");
+				shibieDialog.setCancelable(false);
+				shibieDialog.show();
+				timerDialog = new Timer();
+				//7秒后取消搜索
+				timerDialog.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						shibieDialog.cancel();
+						Message msg = new Message();
+						msg.what = MSG_OVER;
+						mHandler.sendMessage(msg);
+					}
+				}, 15000);
+				resetCard(writedata);
+			}
+		});
+		
+		
 		writecard.setOnClickListener(this);
 	}
 	@Override
@@ -194,11 +221,29 @@ public class ReadFileActivity extends Activity implements OnClickListener {
 				}
 				sendToservice.putExtra("listable", listable);
 				sendToservice.putExtra("activity", activity);
+				sendToservice.putExtra("command", "write");
 				startService(sendToservice);	
 		}catch(Exception e){
 			e.printStackTrace();
 		}
 	}
+	
+	private void resetCard(String writedata) {
+		try{
+
+			Intent sendToservice = new Intent(ReadFileActivity.this,RFIDService.class);
+			Listable listable = null;
+			sendToservice.putExtra("cardType", "0x02");	
+			sendToservice.putExtra("listable", listable);
+			sendToservice.putExtra("activity", activity);
+			sendToservice.putExtra("command", "reset");
+			startService(sendToservice);	
+			
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
 	@Override
 	protected void onResume() {
 		// TODO Auto-generated method stub
@@ -244,12 +289,15 @@ public class ReadFileActivity extends Activity implements OnClickListener {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String receivedata = intent.getStringExtra("result");
+			String command = intent.getStringExtra("command");
 			if(receivedata!=null){
 			shibieDialog.cancel();	
 			timerDialog.cancel();
 			Toast.makeText(ReadFileActivity.this, receivedata, Toast.LENGTH_SHORT).show();
-			item_map.put("ItemImage", R.drawable.checked);
-			listItemAdapter.notifyDataSetChanged();
+			if(command!=null&&!command.equals("reset")){
+				item_map.put("ItemImage", R.drawable.checked);
+				listItemAdapter.notifyDataSetChanged();
+			}
 		}
 		}
 	}

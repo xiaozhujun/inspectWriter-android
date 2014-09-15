@@ -39,9 +39,29 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="选择文件" />
-    <Button
-        android:id="@+id/writecard"
+
+    <RelativeLayout 
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="写卡" />
+        android:layout_height="50dp"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/writecard"
+        	android:layout_height="46dp"
+            android:layout_width="160dp"
+            android:text="写卡" />
+
+    <Button
+        android:id="@+id/inicard"
+        android:layout_width="160dp"
+        android:layout_height="46dp"
+        android:layout_alignBaseline="@+id/writecard"
+        android:layout_alignBottom="@+id/writecard"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="0dp"
+        android:text="密码重置" />	
+
+    </RelativeLayout>
+    
+
 </LinearLayout>

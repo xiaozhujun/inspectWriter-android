@@ -14,6 +14,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.Camera.Area;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -22,7 +23,8 @@ import android.util.Log;
 
 public class RFIDService extends Service {
 	// 区域卡密码
-	private static final String AREA_PASSWORD = "FFFFFFFFFFFF";
+	private static String AREA_PASSWORD = "FFFFFFFFFFFF";
+	//private static final String AREA_PASSWORD = "AAAAAAAAAAAA";
 
 	private NFCcmdManager cmdManager = null;
 	// 广播接受者
@@ -31,6 +33,8 @@ public class RFIDService extends Service {
 	private String cardType = null;
 	// 发送请求的activity
 	private String activity = null;
+	
+	private String command=null;
 
 	private String Tag = "RFIDService"; // Debug
 	Timer searchCard = null;
@@ -62,18 +66,66 @@ public class RFIDService extends Service {
 	private Handler handler = new Handler() {
 
 		public void handleMessage(android.os.Message msg) {
-			if(writeListable(listable)){
-				Intent serviceIntent = new Intent();
-				serviceIntent.setAction(activity);
-				serviceIntent.putExtra("result","写卡成功!");
-				sendBroadcast(serviceIntent);
+			if(command.equals("reset")){
+				if(resetCard()){
+					Intent serviceIntent = new Intent();
+					serviceIntent.setAction(activity);
+					serviceIntent.putExtra("result","重置成功!");
+					serviceIntent.putExtra("command", command);
+					sendBroadcast(serviceIntent);
+				}else{
+					Intent serviceIntent = new Intent();
+					serviceIntent.setAction(activity);
+					serviceIntent.putExtra("result","重置失败!");
+					serviceIntent.putExtra("command", command);
+					sendBroadcast(serviceIntent);
+				}
 			}else{
-				Intent serviceIntent = new Intent();
-				serviceIntent.setAction(activity);
-				serviceIntent.putExtra("result","写卡失败!");
-				sendBroadcast(serviceIntent);
+				if(writeListable(listable)){
+					Intent serviceIntent = new Intent();
+					serviceIntent.setAction(activity);
+					serviceIntent.putExtra("result","写卡成功!");
+					serviceIntent.putExtra("command", command);
+					sendBroadcast(serviceIntent);
+				}else{
+					Intent serviceIntent = new Intent();
+					serviceIntent.setAction(activity);
+					serviceIntent.putExtra("result","写卡失败!");
+					serviceIntent.putExtra("command", command);
+					sendBroadcast(serviceIntent);
+				}
 			}
+			
 		};
+		
+		private boolean resetCard(){
+			AREA_PASSWORD = "152121152121";
+			for(int i=5;i<9;i++){
+				if(!resetSector(i,AREA_PASSWORD,cardID)){
+					return false;
+				}
+			}
+			return true;
+		}
+		
+		private boolean resetSector(int sector,String password,String cardID){
+			boolean authFlag = authCard(sector, AREA_PASSWORD, cardID);
+//			Log.i(Tag, "" + authFlag);
+			if (authFlag) {
+
+				String block = getSectorBlock(sector, 3);
+				String data = "FFFFFFFFFFFFFF078069FFFFFFFFFFFF";
+				//String data = "AAAAAAAAAAAAFF078069AAAAAAAAAAAA";
+				byte[] dataBytes = Tools.HexString2Bytes(data);
+				//byte[] dataBytes = data.getBytes();
+				// byte[] blocks = Tools.HexString2Bytes(block);
+				int bolckInt = Integer.parseInt(block, 16);
+				Log.i("", bolckInt + "");
+				return cmdManager.writeMifare14443A(bolckInt, dataBytes);
+			}	
+			return false;
+			
+		}
 
 		// 认证
 		private boolean authCard(int sector, String password, String cardID) {
@@ -115,6 +167,7 @@ public class RFIDService extends Service {
 		}
 		
 		private boolean writeListable(Listable listable){
+			AREA_PASSWORD = "FFFFFFFFFFFF";
 			if(listable.getPropertyCount()>15){
 				try {
 					throw new ArgumentException("需要写入rfid卡的属性超过上限15个！");
@@ -176,6 +229,7 @@ public class RFIDService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		cardType = intent.getStringExtra("cardType");
 		listable = intent.getParcelableExtra("listable");
+		command = intent.getStringExtra("command");
 		if (intent.getStringExtra("activity") != null) {
 			activity = intent.getStringExtra("activity");
 		}
